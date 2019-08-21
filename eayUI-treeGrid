@@ -1,0 +1,74 @@
+//存放转换后数据的集合              
+List<Map<String,Object>> treeGridList  =new ArrayList<Map<String,Object>>();  
+/** 
+ * 返回 treeGrid(树形表格)需要的json格式数据 
+ */  
+public String backTreeGridTreeRole(){  
+    //得到所有角色  
+    List<Role> list = roleService.getRoleAll();  
+      
+    //调用方法实现角色树  
+    createTreeGridTree(list,"0");  
+      
+    //将集合转换为json输出到页面  
+    Gson gson = new Gson();  
+    String json = gson.toJson(treeGridList);  
+    try {  
+        ServletActionContext.getResponse().getWriter().print(json);  
+        ServletActionContext.getResponse().getWriter().flush();  
+        ServletActionContext.getResponse().getWriter().close();  
+    }catch (IOException e) {  
+        e.printStackTrace();  
+    }     
+      
+    System.out.println(json);  
+    return null;  
+}  
+  
+  
+/** 
+ * 将角色封装成树开始 
+ * @param list 
+ * @param fid 父id 
+ */  
+private void createTreeGridTree(List<Role> list, String fid) {  
+    for (int i = 0; i < list.size(); i++) {  
+        Map<String, Object> map = null;  
+        Role role = (Role) list.get(i);  
+        if (role.getFatherId().equals("0")) {  
+            map = new HashMap<String, Object>();  
+            //这里无所谓怎么转都行，因为在页面easyUI插件treeGrid提供了数据转换的columns属性，具体看相关的js代码  
+            map.put("id", list.get(i).getId());         //id  
+            map.put("name", list.get(i).getName());     //角色名  
+            map.put("children", createTreeGridChildren(list, role.getId()));  
+        }  
+        if (map != null)  
+            treeGridList.add(map);  
+    }  
+}  
+  
+  
+/** 
+ * 递归设置role树 
+ * @param list 
+ * @param fid 
+ * @return 
+ */  
+private List<Map<String, Object>> createTreeGridChildren(List<Role> list, String fid) {  
+    List<Map<String, Object>> childList = new ArrayList<Map<String, Object>>();  
+    for (int j = 0; j < list.size(); j++) {  
+        Map<String, Object> map = null;  
+        Role treeChild = (Role) list.get(j);  
+        if (treeChild.getFatherId().equals(fid)) {  
+            map = new HashMap<String, Object>();  
+            //这里无所谓怎么转都行，因为在页面easyUI插件treeGrid提供了数据转换的columns属性，具体看相关的js代码  
+            map.put("id", list.get(j).getId());  
+            map.put("name", list.get(j).getName());  
+            map.put("children", createTreeGridChildren(list, treeChild.getId()));  
+        }  
+          
+        if (map != null)  
+            childList.add(map);  
+    }  
+    return childList;  
+}
